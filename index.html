@@ -37,9 +37,30 @@
 </head>
 <body>
 
+    <!-- 🎮 オープニング・タイトル画面 -->
+    <div id="title-screen">
+        <canvas id="sparkle-canvas"></canvas>
+        <div class="title-ui top-info">
+            <span>Ver 1.0.0</span>
+            <span>USER ID: 2525-8822</span>
+        </div>
+        
+        <div class="start-btn-container">
+            <img src="./images/button.png" alt="タップしてね" class="start-btn-img">
+        </div>
+
+        <div class="title-ui bottom-info">
+            © Nekotching Project All Rights Reserved.
+        </div>
+        
+        <div class="white-flash" id="white-flash"></div>
+    </div>
+
+    <!-- 📱 メインアプリ画面 -->
     <header>
+        <button id="back-to-title-btn" class="back-title-btn" title="タイトルへ戻る">🏠 タイトル</button>
         <h1>
-            <img src="./title.png" alt="ねこっちんぐ" class="title-logo">
+            <img src="./images/title.png" alt="ねこっちんぐ" class="title-logo">
         </h1>
     </header>
 
@@ -61,7 +82,7 @@
         <div id="camera-container" class="page-content">
             <div class="camera-wrapper">
                 <video id="webcam" autoplay playsinline muted></video>
-                <img src="./frame.png" class="camera-frame" alt="カメラフレーム">
+                <img src="./images/frame.png" class="camera-frame" alt="カメラフレーム">
             </div>
             <button id="snap-btn">📸 撮影して登録</button>
             <div id="ai-status">⚙️ AI準備中...</div>
@@ -120,9 +141,7 @@
 
             <div class="analysis-card">
                 <div style="font-weight: 700; font-size: 0.9rem;">📅 曜日別発見分布</div>
-                <div class="weekday-grid" id="weekday-grid-view">
-                    <!-- JSで動的生成 -->
-                </div>
+                <div class="weekday-grid" id="weekday-grid-view"></div>
             </div>
         </div>
 

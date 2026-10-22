@@ -6,6 +6,150 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// -------------------------------------------------------------
+// 🎮 タイトル画面＆パーティクル＆効果音ロジック
+// -------------------------------------------------------------
+const titleScreen = document.getElementById('title-screen');
+const whiteFlash = document.getElementById('white-flash');
+const backToTitleBtn = document.getElementById('back-to-title-btn');
+const sparkleCanvas = document.getElementById('sparkle-canvas');
+const sCtx = sparkleCanvas.getContext('2d');
+
+let sparkles = [];
+let isTitleActive = true;
+
+// キャンバスリサイズ
+function resizeSparkleCanvas() {
+    sparkleCanvas.width = window.innerWidth;
+    sparkleCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeSparkleCanvas);
+resizeSparkleCanvas();
+
+// パーティクル生成
+for (let i = 0; i < 35; i++) {
+    sparkles.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        size: Math.random() * 6 + 2,
+        speedY: Math.random() * 0.8 + 0.3,
+        speedX: (Math.random() - 0.5) * 0.4,
+        opacity: Math.random() * 0.8 + 0.2,
+        pulse: Math.random() * 0.05 + 0.01,
+        type: Math.random() > 0.3 ? 'star' : 'circle'
+    });
+}
+
+function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+    let rot = Math.PI / 2 * 3;
+    let x = cx;
+    let y = cy;
+    let step = Math.PI / spikes;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerRadius);
+    for (let i = 0; i < spikes; i++) {
+        x = cx + Math.cos(rot) * outerRadius;
+        y = cy + Math.sin(rot) * outerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+
+        x = cx + Math.cos(rot) * innerRadius;
+        y = cy + Math.sin(rot) * innerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+    }
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+    ctx.fill();
+}
+
+function animateSparkles() {
+    if (!isTitleActive) return;
+    sCtx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
+
+    sparkles.forEach(p => {
+        p.y -= p.speedY;
+        p.x += p.speedX;
+        p.opacity += Math.sin(Date.now() * 0.003) * p.pulse;
+
+        if (p.y < -20) {
+            p.y = sparkleCanvas.height + 20;
+            p.x = Math.random() * sparkleCanvas.width;
+        }
+
+        sCtx.fillStyle = `rgba(255, 235, 245, ${Math.abs(Math.sin(p.opacity))})`;
+        if (p.type === 'star') {
+            drawStar(sCtx, p.x, p.y, 4, p.size, p.size / 2);
+        } else {
+            sCtx.beginPath();
+            sCtx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+            sCtx.fill();
+        }
+    });
+
+    requestAnimationFrame(animateSparkles);
+}
+animateSparkles();
+
+// 🔊 ソシャゲ風スタート音（Web Audio API）
+function playStartSE() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+
+        const freqs = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]; // C E G C E G
+        freqs.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+
+            gain.gain.setValueAtTime(0, now + idx * 0.06);
+            gain.gain.linearRampToValueAtTime(0.25, now + idx * 0.06 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.8);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now + idx * 0.06);
+            osc.stop(now + idx * 0.06 + 0.85);
+        });
+    } catch (e) {
+        console.log("SE再生非対応", e);
+    }
+}
+
+// 画面スタートイベント
+titleScreen.addEventListener('click', () => {
+    playStartSE();
+    whiteFlash.classList.add('active');
+
+    setTimeout(() => {
+        titleScreen.style.opacity = '0';
+        setTimeout(() => {
+            titleScreen.style.display = 'none';
+            isTitleActive = false;
+            whiteFlash.classList.remove('active');
+            if (map) map.invalidateSize();
+        }, 400);
+    }, 400);
+});
+
+// タイトルへ戻る
+backToTitleBtn.addEventListener('click', () => {
+    titleScreen.style.display = 'flex';
+    titleScreen.style.opacity = '1';
+    isTitleActive = true;
+    animateSparkles();
+});
+
+
+// -------------------------------------------------------------
+// 🐾 メインアプリ機能ロジック
+// -------------------------------------------------------------
 const MODEL_URL = "https://teachablemachine.withgoogle.com/models/aPPZEVupq/";
 
 const CAT_DB = {
@@ -326,7 +470,6 @@ document.getElementById('snap-btn').addEventListener('click', () => {
         const vWidth = video.videoWidth;
         const vHeight = video.videoHeight;
         
-        // 画面の内枠領域 (灰色部分 531.5 x 732.2) のアスペクト比に合わせて切り出し
         const innerWidth = 696 * 0.764;
         const innerHeight = 928 * 0.789;
         const targetAspect = innerWidth / innerHeight;
