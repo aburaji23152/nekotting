@@ -122,6 +122,64 @@ function playStartSE() {
     }
 }
 
+// 🐱 猫の鳴き声効果音（よりリアルな「ニャ〜ン」合成）
+function playMeowSE() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+
+        // 2つのオシレーター（声の骨格 + まろやかさ）
+        const osc = ctx.createOscillator();
+        const oscSub = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+
+        osc.type = 'sawtooth';
+        oscSub.type = 'sine';
+
+        // 🐾 ピッチの変化（「ニ」で上がり、「ニャ〜」で維持、「ン」で下がる）
+        const pitchCurve = [
+            { t: 0, f: 520 },
+            { t: 0.1, f: 880 },
+            { t: 0.35, f: 640 },
+            { t: 0.65, f: 380 }
+        ];
+
+        pitchCurve.forEach(p => {
+            osc.frequency.exponentialRampToValueAtTime(p.f, now + p.t);
+            oscSub.frequency.exponentialRampToValueAtTime(p.f, now + p.t);
+        });
+
+        // 🐾 口の開き（フォルマント）を再現するフィルター
+        // 高域強調の「ニ」→ 中域が開く「ア」→ 閉じる「ン」
+        filter.type = 'bandpass';
+        filter.Q.setValueAtTime(3.2, now); // 口の響きをくっきり補正
+        filter.frequency.setValueAtTime(1800, now);
+        filter.frequency.exponentialRampToValueAtTime(2600, now + 0.1);  // 「ニ」
+        filter.frequency.exponentialRampToValueAtTime(1300, now + 0.35); // 「ア〜」
+        filter.frequency.exponentialRampToValueAtTime(550, now + 0.65);   // 「ン」
+
+        // 🐾 音量の変化（自然な鳴き出しと余韻）
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.35, now + 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+        // 接続
+        osc.connect(filter);
+        oscSub.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        oscSub.start(now);
+        osc.stop(now + 0.72);
+        oscSub.stop(now + 0.72);
+    } catch (e) {
+        console.log("鳴き声SE再生エラー", e);
+    }
+}
+
 // 画面スタートイベント
 titleScreen.addEventListener('click', () => {
     playStartSE();
@@ -463,6 +521,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 document.getElementById('snap-btn').addEventListener('click', () => {
     if (!navigator.geolocation) return alert("GPSに対応していません。");
     if (!model) return alert("AIモデルの準備が完了していません。");
+
+    // 🔊 撮影ボタンを押したタイミングで鳴き声を鳴らす
+    playMeowSE();
 
     aiStatus.textContent = "📍 解析中...";
 
