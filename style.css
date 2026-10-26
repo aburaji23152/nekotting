@@ -279,16 +279,17 @@ main {
     margin-bottom: 20px;
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    background: #000;
+    background: transparent;
+    box-shadow: none;
 }
 
+/* 内側の撮影部分 */
 video { 
     position: absolute;
-    top: 10.8%;
-    left: 11.9%;
-    width: 76.4%;
-    height: 78.9%;
+    top: 10%;
+    left: 10%;
+    width: 80%;
+    height: 84%;
     object-fit: cover;
     border-radius: 12px;
     display: block;

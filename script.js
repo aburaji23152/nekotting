@@ -470,8 +470,9 @@ document.getElementById('snap-btn').addEventListener('click', () => {
         const vWidth = video.videoWidth;
         const vHeight = video.videoHeight;
         
-        const innerWidth = 696 * 0.764;
-        const innerHeight = 928 * 0.789;
+        // 画面の内枠領域 (幅80%, 高さ84%) のアスペクト比に合わせて切り出し
+        const innerWidth = 696 * 0.80;
+        const innerHeight = 928 * 0.84;
         const targetAspect = innerWidth / innerHeight;
         
         let sWidth = vWidth;
@@ -640,7 +641,7 @@ function renderBookView() {
             <div class="book-lock-icon">${isUnlocked ? '✅' : '🔒'}</div>
             <img src="${imgPath}" alt="${name}">
             <div class="book-name">${isUnlocked ? name : '？？？？'}</div>
-            <div class="book-count">${isUnlocked ? `発見: \${count}回` : '未発見'}</div>
+            <div class="book-count">${isUnlocked ? `発見: ${count}回` : '未発見'}</div>
         `;
         bookGrid.appendChild(card);
     });
